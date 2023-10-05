@@ -11,3 +11,8 @@ target/
 
 .env
 **/.env
+**/http-client.private.env.json
+**/http-client.public.env.json
+
+.vscode/
+.idea/

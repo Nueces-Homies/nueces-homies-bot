@@ -1,7 +1,8 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use prost::Message;
 use serde::Deserialize;
 use serde::Serialize;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::errors::IGDBClientError;
 
@@ -102,11 +103,11 @@ impl IGDBClient {
                 .json::<Token>()
                 .await?;
 
-            if let Token::InvalidToken = new_token {
-                return Err(IGDBClientError::TokenError);
+            return if let Token::InvalidToken = new_token {
+                Err(IGDBClientError::TokenError)
             } else {
-                return Ok(new_token);
-            }
+                Ok(new_token)
+            };
         }
 
         Ok(self.token.clone())
@@ -115,11 +116,12 @@ impl IGDBClient {
 
 #[cfg(test)]
 mod tests {
+    use dotenvy::dotenv;
+
     use crate::api::GameResult;
 
     use super::IGDBClient;
     use super::Token;
-    use dotenvy::dotenv;
 
     #[tokio::test]
     async fn can_get_token() {
@@ -145,7 +147,6 @@ mod tests {
     #[tokio::test]
     async fn can_get_game() {
         dotenv().ok();
-        dotenvy::from_filename("../../.env").ok();
 
         let client_id = std::env::var("TWITCH_CLIENT_ID").expect("couldn't find Twitch client id");
         let client_secret =
