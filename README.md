@@ -7,7 +7,7 @@ With the move to Rust and experience writing the Python version, I want to be ab
 Mostly because I wanted to learn it. It's also cool that the executables get built down to a single file that's probably much leaner than shipping a Java, dotnet, node, or Python runtime. Also, Rust's type system and annoying compiler are great, which should help prevent bad code commits. 
 
 ## Contributing
-Rust and Visual Studio Code should be all you need to get started, tooling wise. To fully run the project though, you'll need a .env file. The .env file should include the following:
+You will need Rust and the [Protobuf Compiler](https://grpc.io/docs/protoc-installation/) in your `PATH` to build the project. To fully run the project though, you'll need a .env file. The .env file should include the following:
 
 ```properties
 GOOGLE_CREDENTIALS=<base64 encoded credentials.json for Google API>
