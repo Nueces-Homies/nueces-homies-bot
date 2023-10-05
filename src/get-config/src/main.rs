@@ -11,7 +11,7 @@ use url::{Position, Url};
 
 #[derive(Parser, Debug)]
 struct Args {
-    config_name: String,
+    config_store_name: String,
 
     #[arg(short, long, default_value = "dev")]
     env: String,
@@ -21,7 +21,7 @@ struct Args {
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    let config_url = format!("https://{}.azconfig.io", args.config_name);
+    let config_url = format!("https://{}.azconfig.io", args.config_store_name);
 
     let creds = Arc::new(DefaultAzureCredential::default());
     let appconfig_client =
