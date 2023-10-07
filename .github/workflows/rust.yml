@@ -39,8 +39,8 @@ jobs:
                 subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} 
             
             - name: Write config
-              run: $GITHUB_WORKSPACE/target/release/get-config ${{ secrets.CONFIG_STORE_NAME }}> $GITHUB_WORKSPACE/.env
+              run: $GITHUB_WORKSPACE/target/release/get-config ${{ secrets.CONFIG_STORE_NAME }} > $GITHUB_WORKSPACE/.env
 
             - name: Test
-              run: cargo test --verbose
+              run: cargo test --release --verbose
             
