@@ -29,7 +29,7 @@ jobs:
               run: sudo apt install -y protobuf-compiler && protoc --version
             
             - name: Build
-              run: cargo build --tests
+              run: cargo build --all-targets --release
 
             - name: Login to Azure
               uses: azure/login@v1
@@ -39,7 +39,7 @@ jobs:
                 subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} 
             
             - name: Write config
-              run: $GITHUB_WORKSPACE/target/get-config > $GITHUB_WORKSPACE/.env
+              run: $GITHUB_WORKSPACE/target/release/get-config ${{ secrets.CONFIG_STORE_NAME }}> $GITHUB_WORKSPACE/.env
 
             - name: Test
               run: cargo test --verbose
