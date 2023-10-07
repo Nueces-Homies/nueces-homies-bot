@@ -42,5 +42,5 @@ jobs:
               run: $GITHUB_WORKSPACE/target/release/get-config ${{ secrets.CONFIG_STORE_NAME }} > $GITHUB_WORKSPACE/.env
 
             - name: Test
-              run: cargo test --release --verbose
+              run: cargo test --release
             
