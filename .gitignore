@@ -11,3 +11,6 @@ target/
 
 .env
 **/.env
+
+.vscode/
+.idea/
