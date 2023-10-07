@@ -12,6 +12,10 @@ on:
         # paths:
         #   - '**.rs'
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
     build-and-test:
         name: "Build and Test"
@@ -25,7 +29,7 @@ jobs:
               run: sudo apt install -y protobuf-compiler && protoc --version
             
             - name: Build
-              run: cargo build --tests --verbose
+              run: cargo build --tests
 
             - name: Login to Azure
               uses: azure/login@v1
