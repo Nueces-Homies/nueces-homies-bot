@@ -45,17 +45,12 @@ jobs:
             - name: Test
               run: cargo test --release
 
-            - name: Create Output Archive
-              run: |
-                mkdir nueces-homies-bot
-                cp target/release/get-config nueces-homies-bot/get-config
-                tar -zcvf nueces-homies-bot.tar.gz nueces-homies-bot
-            
             - name: Upload Archive
               uses: actions/upload-artifact@v3
               with:
-                name: package
-                path: nueces-homies-bot.tar.gz
+                name: nueces-homies-bot
+                path: |
+                  target/release/get-config
 
 
             
