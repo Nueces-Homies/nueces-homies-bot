@@ -1,0 +1,11 @@
+### Search for a Movie
+GET https://api.themoviedb.org/3/search/movie?include_adult=false&query=Armor Wars
+Authorization: Bearer {{tmdbToken}}
+
+### Get a specific movie by id - with release dates
+GET https://api.themoviedb.org/3/movie/24428?append_to_response=release_dates
+Authorization: Bearer {{tmdbToken}}
+
+### Get a specific movie by id - without release dates
+GET https://api.themoviedb.org/3/movie/1030022?append_to_response=release_dates
+Authorization: Bearer {{tmdbToken}}

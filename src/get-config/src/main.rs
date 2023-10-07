@@ -36,9 +36,9 @@ async fn main() -> Result<()> {
         .into_stream();
 
     while let Some(config) = kv_stream.next().await {
-        for keyvalue in config.unwrap().items {
-            let key = keyvalue.key.as_ref().unwrap();
-            let value = get_config_value(&keyvalue, creds.clone()).await?;
+        for key_value in config.unwrap().items {
+            let key = key_value.key.as_ref().unwrap();
+            let value = get_config_value(&key_value, creds.clone()).await?;
             println!("{}={}", key, value);
         }
     }
