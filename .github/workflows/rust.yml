@@ -1,4 +1,4 @@
-name: "Build and Test Rust Code"
+name: Build and Test Rust Code
 
 on:
     workflow_call:
@@ -19,7 +19,7 @@ permissions:
 
 jobs:
     build-and-test:
-        name: "Build and Test"
+        name: Build and Test
         environment: cicd
         runs-on: ubuntu-latest
         steps:
@@ -44,4 +44,21 @@ jobs:
 
             - name: Test
               run: cargo test --release
+
+            - name: Create Output Archive
+              run: |
+                mkdir nueces-homies-bot
+                cp target/release/get-config nueces-homies-bot/get-config
+                tar -zcvf nueces-homies-bot.tar.gz nueces-homies-bot
+            
+            - name: Upload Archive
+              uses: actions/upload-artifact@v3
+              with:
+                name: package
+                path: nueces-homies-bot.tar.gz
+
+
+            
+            
+
             
