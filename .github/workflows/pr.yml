@@ -4,8 +4,8 @@ on:
     pull_request:
         branches: 
           - main
-        paths:
-          - '**.rs'
+        # paths:
+        #   - '**.rs'
 
 jobs:
     call-build-and-test:
