@@ -1,0 +1,14 @@
+name: "Build, Test, and Release Main Branch"
+
+on:
+    push:
+        branches:
+          - main
+        paths:
+          - '**.rs'
+
+jobs:
+    call-build-and-test:
+        uses: ./.github/workflows/rust.yml
+        
+        

@@ -1,16 +1,8 @@
-name: "Build and Test Pull Request"
+name: "Build and Test Rust Code"
 
 on:
-    pull_request:
-        branches: 
-          - main
-        # paths:
-        #   - '**.rs'
-    push:
-        branches:
-          - main
-        # paths:
-        #   - '**.rs'
+    workflow_call:
+      
 
 permissions:
   id-token: write
