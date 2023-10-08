@@ -1,8 +1,0 @@
-{
-    "editor.formatOnSave": true,
-    "rust-analyzer.check.command": "clippy",
-    "rust-analyzer.cargo.buildScripts.enable": true,
-    "crates.compatibleDecorator": "",
-    "crates.incompatibleDecorator": "🚨Latest: ${version}",
-    "files.eol": "\n"
-}
