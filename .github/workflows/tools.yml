@@ -1,0 +1,23 @@
+name: Build Tools
+
+on:
+    workflow_dispatch:
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout source code
+              uses: actions/checkout@v3
+            
+            - name: Install protobuf
+              run: sudo apt install -y protobuf-compiler && protoc --version
+            
+            - name: Build deployment agent
+              run: cargo build --release --package tools/deploy-agent
+            
+            - name: Upload Archive
+              uses: actions/upload-artifact@v3
+              with:
+                name: deploy-agent
+                path: target/release/deploy-agent
