@@ -68,7 +68,7 @@ async fn github_webhook(
             return StatusCode::BAD_REQUEST;
         }
         Err(e) => {
-            error!("Encountered error {}", e);
+            error!("Encountered error {:?}", e);
             return StatusCode::BAD_REQUEST;
         }
         _ => (),
