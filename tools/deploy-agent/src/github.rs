@@ -2,7 +2,7 @@ use std::io::Write;
 
 use axum::headers;
 use axum::headers::{Error as HeaderError, Header, HeaderName, HeaderValue};
-use color_eyre::eyre::eyre;
+use color_eyre::eyre::{eyre, Context};
 use color_eyre::Result;
 use reqwest::header;
 use serde::Deserialize;
@@ -116,9 +116,9 @@ pub async fn download_and_extract_github_artifact(
         .bytes()
         .await?;
 
-    let mut file = NamedTempFile::new()?;
-    file.write_all(zip_file.as_ref())?;
-    unzip(file.path(), download_path.as_ref())?;
+    let mut file = NamedTempFile::new().wrap_err("failed to create temp download file")?;
+    file.write_all(zip_file.as_ref()).wrap_err("failed to write zip file")?;
+    unzip(file.path(), download_path.as_ref()).wrap_err("failed to unzip file")?;
 
     Ok(())
 }
