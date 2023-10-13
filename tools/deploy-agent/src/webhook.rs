@@ -1,47 +1,71 @@
-use axum::http::HeaderMap;
-use color_eyre::eyre::{ContextCompat, Context};
-use ring::hmac;
-use tracing::{warn, info};
-use color_eyre::Result;
-use color_eyre::eyre::eyre;
+use std::ffi::OsStr;
 
-use crate::{github::{Signature, WorkflowRunEvent, WorkflowRunConclusion, download_and_extract_github_artifact}, azure::Azure, AppState};
+use axum::http::HeaderMap;
+use color_eyre::eyre::eyre;
+use color_eyre::eyre::{Context, ContextCompat};
+use color_eyre::Result;
+use ring::hmac;
+use tracing::{info, warn};
+
+use crate::{
+    azure::Azure,
+    github::{
+        download_and_extract_github_artifact, Signature, WorkflowRunConclusion, WorkflowRunEvent,
+    },
+    AppState,
+};
 
 pub async fn handle_webhook(
-    signature: &Signature, 
+    signature: &Signature,
     headers: &HeaderMap,
     state: &AppState,
-    body: &str) -> Result<()>{
-        match validate_signature(&state.azure, &signature.digest, &body).await {
-            Ok(true) => (),
-            Ok(false) => return Err(eyre!("bad signature")),
-            Err(e) => return Err(e),
-        }
-
-        let event_header = headers.get("x-github-event").wrap_err("did not find x-github-event in headers")?;
-        let event_type = event_header.to_str().wrap_err("x-github-event header had unparseable value")?;
-
-        if "workflow_run" != event_type {
-            warn!("Got unhandled event {}", event_type);
-            return Ok(())
-        }
-
-        let workflow_run_event = serde_json::from_str::<WorkflowRunEvent>(&body).wrap_err_with(|| format!("failed to deserialize {}", &body))?;
-
-        let workflow_run = &workflow_run_event.workflow_run;
-        if workflow_run.head_branch == "main"  && workflow_run.conclusion.as_ref().is_some_and(|c| c == &WorkflowRunConclusion::Success) {
-            let artifacts_url = &workflow_run.artifacts_url;
-            info!("Downloading artifacts for {} from {}", &workflow_run.head_sha[0..7], artifacts_url);
-            download_and_extract_github_artifact(
-                &state.azure,
-                &artifacts_url.to_string(),
-                &state.args.extraction_directory,
-            )
-            .await?;
-        }
-
-        Ok(())
+    body: &str,
+) -> Result<()> {
+    match validate_signature(&state.azure, &signature.digest, &body).await {
+        Ok(true) => (),
+        Ok(false) => return Err(eyre!("bad signature")),
+        Err(e) => return Err(e),
     }
+
+    let event_header = headers
+        .get("x-github-event")
+        .wrap_err("did not find x-github-event in headers")?;
+    let event_type = event_header
+        .to_str()
+        .wrap_err("x-github-event header had unparseable value")?;
+
+    if "workflow_run" != event_type {
+        warn!("Got unhandled event {}", event_type);
+        return Ok(());
+    }
+
+    let workflow_run_event = serde_json::from_str::<WorkflowRunEvent>(&body)
+        .wrap_err_with(|| format!("failed to deserialize {}", &body))?;
+
+    let workflow_run = &workflow_run_event.workflow_run;
+    if workflow_run.head_branch == "main"
+        && workflow_run.path.file_name() == Some(OsStr::new("rust.yml"))
+        && workflow_run
+            .conclusion
+            .as_ref()
+            .is_some_and(|c| c == &WorkflowRunConclusion::Success)
+    {
+        let artifacts_url = &workflow_run.artifacts_url;
+        info!(
+            "Downloading artifacts for {} from {}",
+            &workflow_run.head_sha[0..7],
+            artifacts_url
+        );
+        download_and_extract_github_artifact(
+            &state.azure,
+            &artifacts_url.to_string(),
+            &state.args.extraction_directory,
+        )
+        .await?;
+    }
+
+    Ok(())
+}
 
 async fn validate_signature(
     azure: &Azure,

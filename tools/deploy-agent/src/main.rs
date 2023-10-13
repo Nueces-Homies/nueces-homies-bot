@@ -12,7 +12,7 @@ use clap::Parser;
 use color_eyre::Result;
 use reqwest::StatusCode;
 use serde::Deserialize;
-use tracing::error;
+use tracing::{error, info};
 
 use crate::azure::Azure;
 use crate::github::Signature;
@@ -73,6 +73,7 @@ async fn github_webhook(
     State(state): State<Arc<AppState>>,
     body: String,
 ) -> impl IntoResponse {
+    info!("Incoming GitHub Webhook");
     match handle_webhook(&signature, &headers, &state, &body).await {
         Ok(_) => StatusCode::OK,
         Err(e) => {

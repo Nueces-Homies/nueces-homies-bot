@@ -1,4 +1,5 @@
 use std::io::Write;
+use std::path::PathBuf;
 
 use axum::headers;
 use axum::headers::{Error as HeaderError, Header, HeaderName, HeaderValue};
@@ -22,15 +23,24 @@ struct ArtifactList {
 }
 
 #[derive(Deserialize, PartialEq, Eq)]
-#[serde(rename_all="snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum WorkflowRunAction {
-    Requested, Completed, InProgress
+    Requested,
+    Completed,
+    InProgress,
 }
 
 #[derive(Deserialize, PartialEq, Eq)]
-#[serde(rename_all="snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum WorkflowRunConclusion {
-    Success, Failure, Neutral, Cancelled, TimedOut, ActionRequired, Stale, Skipped
+    Success,
+    Failure,
+    Neutral,
+    Cancelled,
+    TimedOut,
+    ActionRequired,
+    Stale,
+    Skipped,
 }
 
 #[derive(Deserialize)]
@@ -40,6 +50,7 @@ pub struct WorkflowRun {
     pub status: WorkflowRunAction,
     pub conclusion: Option<WorkflowRunConclusion>,
     pub artifacts_url: String,
+    pub path: PathBuf,
 }
 
 #[derive(Deserialize)]
@@ -47,7 +58,6 @@ pub struct WorkflowRunEvent {
     pub action: WorkflowRunAction,
     pub workflow_run: WorkflowRun,
 }
-
 
 pub struct Signature {
     pub digest: Vec<u8>,
@@ -117,7 +127,8 @@ pub async fn download_and_extract_github_artifact(
         .await?;
 
     let mut file = NamedTempFile::new().wrap_err("failed to create temp download file")?;
-    file.write_all(zip_file.as_ref()).wrap_err("failed to write zip file")?;
+    file.write_all(zip_file.as_ref())
+        .wrap_err("failed to write zip file")?;
     unzip(file.path(), download_path.as_ref()).wrap_err("failed to unzip file")?;
 
     Ok(())
