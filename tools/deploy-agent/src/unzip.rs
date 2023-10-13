@@ -13,7 +13,7 @@ pub fn unzip(src_zip: &Path, dst_dir: &Path) -> color_eyre::Result<()> {
         };
 
         let dst_path = dst_dir.join(filename);
-        let mut dst_file = fs::File::create(dst_path)?;
+        let mut dst_file = fs::File::create(&dst_path)?;
         std::io::copy(&mut file_in_zip, &mut dst_file)?;
 
         #[cfg(unix)]
