@@ -9,10 +9,10 @@ use axum::{Router, TypedHeader};
 use axum_macros::debug_handler;
 use clap::Parser;
 use color_eyre::Result;
-use octocrab::models::webhook_events::{WebhookEvent, WebhookEventPayload};
+use github::{WorkflowRunEvent, WorkflowRunConclusion};
 use reqwest::StatusCode;
 use ring::hmac;
-use tracing::error;
+use tracing::{error, warn};
 
 use crate::azure::Azure;
 use crate::github::{download_and_extract_github_artifact, Signature};
@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
     let state = Arc::new(AppState { azure, args });
 
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::DEBUG)
+        .with_max_level(tracing::Level::INFO)
         .init();
 
     let app = Router::new()
@@ -68,7 +68,7 @@ async fn github_webhook(
             return StatusCode::BAD_REQUEST;
         }
         Err(e) => {
-            error!("Encountered error {:?}", e);
+            error!("Encountered error {}", e);
             return StatusCode::BAD_REQUEST;
         }
         _ => (),
@@ -90,34 +90,34 @@ async fn github_webhook(
         }
     };
 
-    let event = match WebhookEvent::try_from_header_and_body(event_type, &body) {
+    if "workflow_run" != event_type {
+        warn!("Got unhandled event {}", &event_type);
+        return StatusCode::OK;
+    }
+
+    let workflow_run_event = match serde_json::from_str::<WorkflowRunEvent>(&body) {
         Ok(event) => event,
-        Err(e) => {
-            error!("Unable to parse event type {}: {}", event_type, e);
+        Err(error) => {
+            error!("Unable to deserialize body {}. Error {}", &body, error);
             return StatusCode::BAD_REQUEST;
         }
     };
 
-    if let WebhookEventPayload::WorkflowRun(workflow_event) = event.specific {
-        let run_info = workflow_event.workflow_run;
-        let status = &run_info["status"];
-        let branch = &run_info["head_branch"];
-
-        if branch == "main" && status == "completed" && run_info["conclusion"] == "success" {
-            let artifacts_url = &run_info["artifacts_url"];
-            if let Err(e) = download_and_extract_github_artifact(
-                &state.azure,
+    let workflow_run = &workflow_run_event.workflow_run;
+    if workflow_run.head_branch == "main"  && workflow_run.conclusion.as_ref().is_some_and(|c| c == &WorkflowRunConclusion::Success) {
+        let artifacts_url = &workflow_run.artifacts_url;
+        if let Err(e) = download_and_extract_github_artifact(
+            &state.azure,
+            &artifacts_url.to_string(),
+            &state.args.extraction_directory,
+        )
+        .await
+        {
+            error!(
+                "Failed to download and extract artifact {} from Github: {}",
                 &artifacts_url.to_string(),
-                &state.args.extraction_directory,
-            )
-            .await
-            {
-                error!(
-                    "Failed to download and extract artifact {} from Github: {}",
-                    &artifacts_url.to_string(),
-                    e
-                );
-            }
+                e
+            );
         }
     }
 

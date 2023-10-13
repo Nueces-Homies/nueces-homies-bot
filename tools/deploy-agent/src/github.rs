@@ -11,6 +11,43 @@ use tempfile::NamedTempFile;
 use crate::azure::Azure;
 use crate::unzip::unzip;
 
+#[derive(Deserialize)]
+struct Artifact {
+    archive_download_url: String,
+}
+
+#[derive(Deserialize)]
+struct ArtifactList {
+    artifacts: Vec<Artifact>,
+}
+
+#[derive(Deserialize, PartialEq, Eq)]
+#[serde(rename_all="snake_case")]
+pub enum WorkflowRunAction {
+    Requested, Completed, InProgress
+}
+
+#[derive(Deserialize, PartialEq, Eq)]
+#[serde(rename_all="snake_case")]
+pub enum WorkflowRunConclusion {
+    Success, Failure, Neutral, Cancelled, TimedOut, ActionRequired, Stale, Skipped
+}
+
+#[derive(Deserialize)]
+pub struct WorkflowRun {
+    pub head_branch: String,
+    pub status: WorkflowRunAction,
+    pub conclusion: Option<WorkflowRunConclusion>,
+    pub artifacts_url: String,
+}
+
+#[derive(Deserialize)]
+pub struct WorkflowRunEvent {
+    pub action: WorkflowRunAction,
+    pub workflow_run: WorkflowRun,
+}
+
+
 pub struct Signature {
     pub digest: Vec<u8>,
 }
@@ -47,16 +84,6 @@ impl Header for Signature {
     }
 }
 
-#[derive(Deserialize)]
-struct Artifact {
-    archive_download_url: String,
-}
-
-#[derive(Deserialize)]
-struct ArtifactList {
-    artifacts: Vec<Artifact>,
-}
-
 pub async fn download_and_extract_github_artifact(
     azure: &Azure,
     artifact_list_url: &str,
@@ -74,8 +101,7 @@ pub async fn download_and_extract_github_artifact(
         .default_headers(default_headers)
         .build()?;
 
-    let url = &artifact_list_url[1..artifact_list_url.len() - 1];
-    let list_text = client.get(url).send().await?.text().await?;
+    let list_text = client.get(artifact_list_url).send().await?.text().await?;
     let list = serde_json::from_str::<ArtifactList>(&list_text)?;
     let &artifact = &list
         .artifacts
