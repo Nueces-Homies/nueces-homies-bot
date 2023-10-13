@@ -12,7 +12,7 @@ use color_eyre::Result;
 use github::{WorkflowRunEvent, WorkflowRunConclusion};
 use reqwest::StatusCode;
 use ring::hmac;
-use tracing::{error, warn};
+use tracing::{error, warn, info};
 
 use crate::azure::Azure;
 use crate::github::{download_and_extract_github_artifact, Signature};
@@ -106,6 +106,7 @@ async fn github_webhook(
     let workflow_run = &workflow_run_event.workflow_run;
     if workflow_run.head_branch == "main"  && workflow_run.conclusion.as_ref().is_some_and(|c| c == &WorkflowRunConclusion::Success) {
         let artifacts_url = &workflow_run.artifacts_url;
+        info!("Downloading artifacts for {} from {}", &workflow_run.head_sha[0..7], artifacts_url);
         if let Err(e) = download_and_extract_github_artifact(
             &state.azure,
             &artifacts_url.to_string(),
