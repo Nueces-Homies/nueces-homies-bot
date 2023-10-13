@@ -14,7 +14,7 @@ pub async fn handle_webhook(
     body: &str) -> Result<()>{
         match validate_signature(&state.azure, &signature.digest, &body).await {
             Ok(true) => (),
-            Ok(false) => return Err(eyre!("bad signauture")),
+            Ok(false) => return Err(eyre!("bad signature")),
             Err(e) => return Err(e),
         }
 
