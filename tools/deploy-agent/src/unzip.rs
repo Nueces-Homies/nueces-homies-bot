@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::Path;
 
-pub fn unzip(src_zip: &Path, dst_dir: &Path) -> anyhow::Result<()> {
+pub fn unzip(src_zip: &Path, dst_dir: &Path) -> color_eyre::Result<()> {
     let zip_file = fs::File::open(src_zip)?;
     let mut archive = zip::ZipArchive::new(zip_file)?;
 

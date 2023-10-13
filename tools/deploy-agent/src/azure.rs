@@ -1,6 +1,6 @@
+use color_eyre::Result;
 use std::sync::Arc;
 
-use anyhow::Result;
 use azure_identity::DefaultAzureCredential;
 use azure_security_keyvault::SecretClient;
 

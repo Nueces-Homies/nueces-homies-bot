@@ -1,17 +1,18 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use anyhow::Result;
 use axum::extract::State;
-use axum::headers::HeaderMap;
-use axum::http::StatusCode;
+use axum::http::HeaderMap;
 use axum::response::IntoResponse;
 use axum::routing::post;
 use axum::{Router, TypedHeader};
 use axum_macros::debug_handler;
 use clap::Parser;
+use color_eyre::Result;
 use octocrab::models::webhook_events::{WebhookEvent, WebhookEventPayload};
+use reqwest::StatusCode;
 use ring::hmac;
+use tracing::error;
 
 use crate::azure::Azure;
 use crate::github::{download_and_extract_github_artifact, Signature};
@@ -59,21 +60,44 @@ async fn github_webhook(
     State(state): State<Arc<AppState>>,
     body: String,
 ) -> impl IntoResponse {
-    let secret = state
-        .azure
-        .get_secret("github-webhook-secret")
-        .await
-        .unwrap();
+    let digest = &signature.digest;
 
-    let digest = signature.digest;
-    let key = hmac::Key::new(hmac::HMAC_SHA256, secret.as_bytes());
-
-    if let Err(_) = hmac::verify(&key, body.as_bytes(), digest.as_slice()) {
-        return StatusCode::BAD_REQUEST;
+    match validate_signature(&state.azure, digest, &body).await {
+        Ok(false) => {
+            error!("Bad signature {:?}", digest);
+            return StatusCode::BAD_REQUEST;
+        }
+        Err(e) => {
+            error!("Encountered error {}", e);
+            return StatusCode::BAD_REQUEST;
+        }
+        _ => (),
     }
 
-    let event_type = headers.get("x-github-event").unwrap().to_str().unwrap();
-    let event = WebhookEvent::try_from_header_and_body(event_type, &body).unwrap();
+    let event_header = match headers.get("x-github-event") {
+        Some(header) => header,
+        None => {
+            error!("x-github-event not found in headears");
+            return StatusCode::BAD_REQUEST;
+        }
+    };
+
+    let event_type = match event_header.to_str() {
+        Ok(value) => value,
+        Err(e) => {
+            error!("Got invalid header value for x-github-event {}", e);
+            return StatusCode::BAD_REQUEST;
+        }
+    };
+
+    let event = match WebhookEvent::try_from_header_and_body(event_type, &body) {
+        Ok(event) => event,
+        Err(e) => {
+            error!("Unable to parse event type {}: {}", event_type, e);
+            return StatusCode::BAD_REQUEST;
+        }
+    };
+
     if let WebhookEventPayload::WorkflowRun(workflow_event) = event.specific {
         let run_info = workflow_event.workflow_run;
         let status = &run_info["status"];
@@ -81,15 +105,32 @@ async fn github_webhook(
 
         if branch == "main" && status == "completed" && run_info["conclusion"] == "success" {
             let artifacts_url = &run_info["artifacts_url"];
-            download_and_extract_github_artifact(
+            if let Err(e) = download_and_extract_github_artifact(
                 &state.azure,
                 &artifacts_url.to_string(),
                 &state.args.extraction_directory,
             )
             .await
-            .unwrap();
+            {
+                error!(
+                    "Failed to download and extract artifact {} from Github: {}",
+                    &artifacts_url.to_string(),
+                    e
+                );
+            }
         }
     }
 
     StatusCode::OK
+}
+
+async fn validate_signature(
+    azure: &Azure,
+    expected_signature: &Vec<u8>,
+    data: &str,
+) -> Result<bool> {
+    let secret = azure.get_secret("github-webhook-secret").await?;
+    let key = hmac::Key::new(hmac::HMAC_SHA256, secret.as_bytes());
+    let result = hmac::verify(&key, data.as_bytes(), expected_signature.as_slice());
+    Ok(result.is_ok())
 }
