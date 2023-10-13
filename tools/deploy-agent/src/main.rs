@@ -77,7 +77,7 @@ async fn github_webhook(
     let event_header = match headers.get("x-github-event") {
         Some(header) => header,
         None => {
-            error!("x-github-event not found in headears");
+            error!("x-github-event not found in headers");
             return StatusCode::BAD_REQUEST;
         }
     };
