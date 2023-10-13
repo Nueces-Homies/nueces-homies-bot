@@ -1,0 +1,25 @@
+[package]
+name = "deploy-agent"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+color-eyre = "0.6.2"
+axum = { version = "0.6.20", features = ["headers"] }
+axum-macros = "0.3.8"
+azure_core = "0.16.0"
+azure_identity = "0.16.2"
+azure_security_keyvault = "0.16.0"
+clap = { version = "4.4.6", features = ["derive"] }
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.107"
+tokio = { version = "1.32.0", features = ["full"] }
+ring = "0.17.2"
+tracing = "0.1.37"
+tracing-subscriber = "0.3.17"
+hex = "0.4.3"
+reqwest = { version = "0.11.22" }
+zip = "0.6.6"
+tempfile = { version = "3.8.0", features = [] }
