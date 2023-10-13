@@ -1,15 +1,17 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use axum::extract::State;
+use axum::extract::{Query, State};
 use axum::http::HeaderMap;
 use axum::response::IntoResponse;
+use axum::routing::get;
 use axum::routing::post;
 use axum::{Router, TypedHeader};
 use axum_macros::debug_handler;
 use clap::Parser;
 use color_eyre::Result;
 use reqwest::StatusCode;
+use serde::Deserialize;
 use tracing::error;
 
 use crate::azure::Azure;
@@ -44,6 +46,7 @@ async fn main() -> Result<()> {
         .init();
 
     let app = Router::new()
+        .route("/echo", get(echo))
         .route("/github", post(github_webhook))
         .with_state(state);
 
@@ -51,6 +54,16 @@ async fn main() -> Result<()> {
     Ok(axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await?)
+}
+
+#[derive(Deserialize)]
+struct EchoParams {
+    message: String,
+}
+
+#[debug_handler]
+async fn echo(params: Query<EchoParams>) -> impl IntoResponse {
+    format!("Echo: {}", params.message)
 }
 
 #[debug_handler]
@@ -68,4 +81,3 @@ async fn github_webhook(
         }
     }
 }
-
