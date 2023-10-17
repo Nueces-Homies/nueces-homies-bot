@@ -894,12 +894,12 @@ dependencies = [
 name = "get-config"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "azure_core",
  "azure_identity",
  "azure_security_keyvault",
  "azure_svc_appconfiguration",
  "clap",
+ "color-eyre",
  "futures",
  "serde",
  "serde_json",
