@@ -47,7 +47,6 @@ pub enum WorkflowRunConclusion {
 pub struct WorkflowRun {
     pub head_branch: String,
     pub head_sha: String,
-    pub status: WorkflowRunAction,
     pub conclusion: Option<WorkflowRunConclusion>,
     pub artifacts_url: String,
     pub path: PathBuf,

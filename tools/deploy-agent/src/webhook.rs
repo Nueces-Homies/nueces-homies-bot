@@ -9,9 +9,7 @@ use tracing::{info, warn};
 
 use crate::{
     azure::Azure,
-    github::{
-        download_and_extract_github_artifact, Signature, WorkflowRunConclusion, WorkflowRunEvent,
-    },
+    github::{Signature, WorkflowRunConclusion, WorkflowRunEvent},
     AppState,
 };
 
@@ -39,8 +37,7 @@ pub async fn handle_webhook(
         return Ok(());
     }
 
-    let workflow_run_event = serde_json::from_str::<WorkflowRunEvent>(&body)
-        .wrap_err_with(|| format!("failed to deserialize {}", &body))?;
+    let workflow_run_event = serde_json::from_str::<WorkflowRunEvent>(&body)?;
 
     let workflow_run = &workflow_run_event.workflow_run;
     if workflow_run.head_branch == "main"
@@ -56,12 +53,10 @@ pub async fn handle_webhook(
             &workflow_run.head_sha[0..7],
             artifacts_url
         );
-        download_and_extract_github_artifact(
-            &state.azure,
-            &artifacts_url.to_string(),
-            &state.args.extraction_directory,
-        )
-        .await?;
+        state
+            .download_queue_tx
+            .send(artifacts_url.to_owned())
+            .await?;
     }
 
     Ok(())
