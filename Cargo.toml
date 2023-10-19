@@ -1,4 +1,4 @@
 [workspace]
 resolver = "2"
 
-members = ["src/igdb", "src/get-config", "src/tmdb", "tools/deploy-agent"]
+members = ["src/igdb", "src/get-config", "src/tmdb", "src/google", "tools/deploy-agent"]

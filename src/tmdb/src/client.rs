@@ -130,16 +130,10 @@ mod tests {
         let api_token = env::var("TMDB_TOKEN").expect("couldn't find TMDB token");
         let client = TMDBClient::new(&api_token).expect("couldn't create client");
 
-        let movie = match client.get_movie(24428.into()).await {
-            Ok(m) => m,
-            Err(e) => match e {
-                TMDBClientError::ClientDeserializationError(e) => {
-                    println!("{}:{} {:?}", e.line(), e.column(), e.classify());
-                    panic!("Boo")
-                }
-                _ => panic!("boo"),
-            },
-        };
+        let movie = client
+            .get_movie(24428.into())
+            .await
+            .expect("movie should exist");
 
         let british_release_date = movie
             .release_dates()
